@@ -5,19 +5,33 @@ from pandas.plotting import register_matplotlib_converters
 register_matplotlib_converters()
 
 # Import data (Make sure to parse dates. Consider setting index column to 'date'.)
-df = None
+df = pd.read_csv("fcc-forum-pageviews.csv", parse_dates=True, index_col=0)
 
 # Clean data
-df = None
+df = df[(df['value'] >= df['value'].quantile(0.025)) 
+    & (df['value'] <= df['value'].quantile(0.975))]
 
 
 def draw_line_plot():
     # Draw line plot
+    df2 = df.copy()
 
+    df2['Years'] = df2.index.year
 
+    df2['Months'] = df2.index.month_name()
+    df2['Month_num'] = df2.index.month
 
+    df2 = df2.groupby(['Years', 'Months', 'Month_num'])['value'].mean().reset_index(name='Average Page Views')
 
+    df2 = df2.sort_values(by=['Years', 'Month_num'])
 
+    ordered_month_names = df2.sort_values(by=['Month_num'])['Months'].unique()
+
+    bar_plot = sns.barplot(data=df2, x='Years', y='Average Page Views',
+        hue='Months', hue_order=ordered_month_names)
+
+    fig = bar_plot.fig
+    
     # Save image and return fig (don't change this part)
     fig.savefig('line_plot.png')
     return fig
